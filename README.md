@@ -1,4 +1,4 @@
-## RANSAC L-shape Fitting for 3D LiDAR Point Clouds
+## L-shape Fitting for 3D LiDAR Point Clouds
 An ROS implementation for L-shape fitting for 3D LiDAR point clouds
 
 ![Ubuntu](https://img.shields.io/badge/OS-Ubuntu-informational?style=flat&logo=ubuntu&logoColor=white&color=2bbc8a)
@@ -30,7 +30,7 @@ An ROS implementation for L-shape fitting for 3D LiDAR point clouds
     # clone the repo
     mkdir -p catkin_ws/src
     cd catkin_ws/src
-    git clone ...
+    git clone https://github.com/HMX2013/L-shape-fitting-for-3D-lidar-point-cloud
     cd ../
     catkin_make 
     roslaunch ransac_lshape_fitting ransac_lshape_fitting.launch
