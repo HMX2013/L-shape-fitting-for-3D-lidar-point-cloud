@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lidar_shape_estimation)
+project(l_shape_fitting)
 
-find_package(autoware_build_flags REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   autoware_msgs
   pcl_ros
@@ -23,33 +22,19 @@ include_directories(
   ${PCL_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
 )
-# src/node.cpp
-add_executable(lidar_shape_estimation
+
+add_executable(l_shape_fitting
   src/main.cpp
   src/shape_estimator.cpp
-  # src/model/bounding_box.cpp
-  # src/model/convex_hull.cpp
-  # src/model/cylinder.cpp
 )
 
-add_dependencies(lidar_shape_estimation
+add_dependencies(l_shape_fitting
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 
-target_link_libraries(lidar_shape_estimation
+target_link_libraries(l_shape_fitting
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
-)
-
-install(TARGETS lidar_shape_estimation
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-  FILES_MATCHING PATTERN "*.launch"
 )

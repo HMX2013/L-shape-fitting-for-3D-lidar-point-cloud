@@ -15,7 +15,7 @@
 #include <tf2/exceptions.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#define __APP_NAME__ "L shape Fitting"
+#define __APP_NAME__ "L-shape Fitting"
 
 class ShapeEstimationNode
 {
@@ -29,7 +29,11 @@ private:
 
   std::string bbox_source_frame_;
   std::string bbox_target_frame_;
-  double filter_res_;
+  std::string L_shape_input_;
+  std::string L_shape_output_;
+  std::string L_shape_visualization_;
+
+  float filter_res_;
 
   tf2_ros::TransformListener tf2_listener;
   tf2_ros::Buffer tf2_buffer;
@@ -51,14 +55,23 @@ public:
 
 ShapeEstimationNode::ShapeEstimationNode() : nh_(""), private_nh("~"),tf2_listener(tf2_buffer)
 {
-  private_nh.param<std::string>("bbox_target_frame", bbox_target_frame_, "velodyne");
+  /* Initialize tuning parameter */
+  private_nh.param<std::string>("bbox_target_frame", bbox_target_frame_, "base_link");
   ROS_INFO("[%s] bounding box's target frame is: %s", __APP_NAME__, bbox_target_frame_);
-  private_nh.param("filter_res", filter_res_, 0.0);
+  private_nh.param<float>("filter_res", filter_res_, 0.0);
   ROS_INFO("[%s] filter_res is: %f", __APP_NAME__, filter_res_);
 
-  sub_from_clustering = nh_.subscribe("input", 1, &ShapeEstimationNode::callback, this);
-  pub_autoware_object_ = nh_.advertise<autoware_msgs::DetectedObjectArray>("objects", 1, true);
-  pub_jsk_bboxes_ = nh_.advertise<jsk_recognition_msgs::BoundingBoxArray>("jsk_objects",1);
+  private_nh.param<std::string>("L_shape_input_topic", L_shape_input_, "/segmentation/detected_objects");
+  ROS_INFO("[%s] L shape input_topic is: %s", __APP_NAME__, L_shape_input_);
+  private_nh.param<std::string>("L_shape_output_topic", L_shape_output_, "/perception/lidar/shape_estimation/objects");
+  ROS_INFO("[%s] L shape output_topic is: %s", __APP_NAME__, L_shape_output_);
+
+  private_nh.param<std::string>("L_shape_visualization_topic", L_shape_visualization_, "/perception/lidar/jsk_bbox_array");
+  ROS_INFO("[%s] L-shape visualization topic is: %s", __APP_NAME__, L_shape_visualization_);
+
+  sub_from_clustering = nh_.subscribe(L_shape_input_, 1, &ShapeEstimationNode::callback, this);
+  pub_autoware_object_ = nh_.advertise<autoware_msgs::DetectedObjectArray>(L_shape_output_, 1, true);
+  pub_jsk_bboxes_ = nh_.advertise<jsk_recognition_msgs::BoundingBoxArray>(L_shape_visualization_,1);
 }
 
 void ShapeEstimationNode::callback(const autoware_msgs::DetectedObjectArray::ConstPtr& input_msg)
@@ -85,7 +98,6 @@ void ShapeEstimationNode::callback(const autoware_msgs::DetectedObjectArray::Con
   {
     transform_stamped = tf2_buffer.lookupTransform(bbox_target_frame_, bbox_source_frame_, ros::Time());
     // ROS_INFO("target_frame is %s",bbox_target_frame_.c_str());
-    // ROS_INFO("test1");
   }
   catch (tf2::TransformException& ex)
   {
@@ -103,6 +115,7 @@ void ShapeEstimationNode::callback(const autoware_msgs::DetectedObjectArray::Con
     }
   }
 
+  const auto start_time = std::chrono::steady_clock::now();
   // Estimate shape for each object and pack msg
   for (auto &object : output_msg.objects)
   {
@@ -118,19 +131,13 @@ void ShapeEstimationNode::callback(const autoware_msgs::DetectedObjectArray::Con
       vg.filter(*cluster);
     }
     else{
-      ROS_INFO("no filting for the L-shape fitting");
+      //ROS_INFO("no filting for the L-shape fitting");
     }
 
-    const auto start_time = std::chrono::steady_clock::now();
-
-    // object.label="person";
-    // estimate shape and pose
-    estimator_.getShapeAndPose(object.label, *cluster, object);
-
-    // Time the whole process
-    const auto end_time = std::chrono::steady_clock::now();
-    const auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    //std::cout << "BBOX L-shape fitting took " << elapsed_time.count() << " milliseconds" << std::endl;
+    bool success_fitting = estimator_.getShapeAndPose(object.label, *cluster, object);
+    
+    if(!success_fitting)
+      continue;
 
     geometry_msgs::Pose pose, pose_transformed;
     pose.position = object.pose.position;
@@ -140,27 +147,17 @@ void ShapeEstimationNode::callback(const autoware_msgs::DetectedObjectArray::Con
 
     object.header = bbox_header;
     object.pose = pose_transformed;
-    // double r = sqrt(object.pose.position.x * object.pose.position.x + object.pose.position.y * object.pose.position.y +
-    //                 object.pose.position.z * object.pose.position.z);
-
-    // if (r < 2)
-    // {
-    //   jsk_bbox = jsk_bbox_transform(object, bbox_header, pose_transformed);
-    //   jsk_bbox_array.boxes.emplace_back(jsk_bbox);
-    // }
-    // else
-    // {
-    //   continue;
-    // }
 
     jsk_bbox = jsk_bbox_transform(object, bbox_header, pose_transformed);
     jsk_bbox_array.boxes.emplace_back(jsk_bbox);
-
-    // ROS_INFO("jsk bbox_z is %f",jsk_bbox.pose.position.z);
-    // ROS_INFO("autoware bbox_z is %f",jsk_bbox.pose.position.z);
   }
 
-  // Publish
+  // Time the whole process
+  const auto end_time = std::chrono::steady_clock::now();
+  const auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+  std::cout << "BBOX L-shape fitting took " << elapsed_time.count() << " milliseconds" << std::endl;
+
+  // Publish bounding box information
   pub_autoware_object_.publish(output_msg);
   pub_jsk_bboxes_.publish(jsk_bbox_array);
 

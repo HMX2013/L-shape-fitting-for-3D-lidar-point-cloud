@@ -1,0 +1,23 @@
+<launch>
+
+  <arg name="namespace" default="detection"/>
+  <arg name="packagename" default="shape_estimation"/>
+
+  <node pkg="l_shape_fitting" type="l_shape_fitting" name="L_shape_fitting" output="screen">
+    <param name="bbox_target_frame"    value="velodyne_1"/>
+    <param name="filter_res"           value="0.1"/>
+
+    <param name="L_shape_input_topic"           value="/segmentation/detected_objects"/>
+    <param name="L_shape_output_topic"          value="/detection/shape_estimation/objects"/>
+    <param name="L_shape_visualization_topic"   value="/detection/jsk_bbox_array"/>
+  </node>
+
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="world_velodyne" args="0 0 5 0 0 0 1  velodyne world" /> -->
+
+  <node pkg="detected_objects_visualizer" type="visualize_detected_objects" name="shape_estimation_visualization"
+        output="screen" ns="/$(arg namespace)/$(arg packagename)"/>
+
+  <!-- Rviz -->
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find l_shape_fitting)/rviz/L-shape_fitting_cluster.rviz" output="log" respawn="false" />
+
+</launch>

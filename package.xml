@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>lidar_shape_estimation</name>
+  <name>l_shape_fitting</name>
   <version>1.12.0</version>
   <description>This package implements an L-Shaped PointCloud pose estimation</description>
   <maintainer email="hmx_2013@outlook.com">HMX</maintainer>

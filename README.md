@@ -1,49 +1,47 @@
-# Lidar Cluster Shape Estimation
-L-shape fitting implementation of the paper:
+## RANSAC L-shape Fitting for 3D LiDAR Point Clouds
+An ROS implementation for L-shape fitting for 3D LiDAR point clouds
+
+![Ubuntu](https://img.shields.io/badge/OS-Ubuntu-informational?style=flat&logo=ubuntu&logoColor=white&color=2bbc8a)
+![ROS](https://img.shields.io/badge/Tools-ROS-informational?style=flat&logo=ROS&logoColor=white&color=2bbc8a)
+![C++](https://img.shields.io/badge/Code-C++-informational?style=flat&logo=c%2B%2B&logoColor=white&color=2bbc8a)
+
+![demo_1](media/demo_01.png)
+
 
 ## Reference
-* Efficient L-Shape Fitting for Vehicle Detection Using Laser Scanners}
-* 
+* Efficient L-Shape Fitting for Vehicle Detection Using Laser Scanners
+* Autoware: core perception
 
+## Features
+* slow
 
-### How to use
-* `roslaunch lidar_shape_estimation L_shape_estimation_clustering.launch`
+**TODOs**
+* imporove the speed
 
-Launch files also include the visualization node.
+**Known Issues**
+* the fitting is slow
 
-## Requirements
+## Dependencies
+* the segementation part to output topic /segmentation/detected_objects
+* autoware-msgs
+* pcl
 
-1. LiDAR data segmented. 
-1. Objects 
+## How to use
+    # clone the repo
+    mkdir -p catkin_ws/src
+    cd catkin_ws/src
+    git clone ...
+    cd ../
+    catkin_make 
+    roslaunch ransac_lshape_fitting ransac_lshape_fitting.launch
 
-## Parameters
+## Contribution
+You are welcome contributing to the package by opening a pull-request
 
-|Parameter| Type| Description|Default|
-----------|-----|--------|---|
-|`input`|*String*|Topic name containing the objects detected by the Lidar in 3D space.|`/detection/lidar_detector/objects`|
-|`output`|*String*|Topic name containing the objects with the shape estimated in 3D space.|`/detection/lidar_shape_estimation/objects`|
+We are following: 
+[Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html), 
+[C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#main), 
+and [ROS C++ Style Guide](http://wiki.ros.org/CppStyleGuide)
 
-## Usage example
-
-1. Launch a ground filter algorithm from the `Points Preprocessor` section in the **Sensing** tab. (adjust the parameters to your vehicle setup).
-1. Launch a Lidar Detector from the Computing tab.
-1. Launch this node.
-
-## Node info
-
-```
-Node [/lidar_shape_estimation]
-Publications: 
- * /detection/shape_estimation/objects [autoware_msgs/DetectedObjectArray]
-
-Subscriptions: 
- * /detection/lidar_detector/objects [autoware_msgs/DetectedObjectArray]
- 
--------------------------
-Node [/detection/shape_estimation/shape_estimation_visualization]
-Publications: 
- * /detection/shape_estimation/objects_markers [visualization_msgs/MarkerArray]
-
-Subscriptions: 
- * /detection/shape_estimation/objects [autoware_msgs/DetectedObjectArray]
-```
+## License
+MIT License
